@@ -1,0 +1,93 @@
+---
+title: "Notebook"
+---
+
+These lines clear variables, plots and help pages:
+
+```{r}
+rm(list = ls())
+dev.off()
+help.start()
+```
+
+We first need to get the appropriate library ready. Remember to precede every line with the `install.packages` command.
+
+```{r}
+library("astsa")
+library("xts")
+library("readr")
+library("lubridate")
+library("dplyr")
+```
+
+We're going to extract the data from Arpa Lombardia.
+
+```{r}
+setwd("C:/Users/39349/OneDrive/Desktop/Projects/Su-git-hub/rain-chaos")
+getwd()
+df <- read.csv("Precipitazioni_dal_2011_al_2020_20250215.csv", header = TRUE)
+```
+This data frame contains rain precipitation measurements from 2014-07-18 to 2021-01-01, done by a single station every 10 minutes. We only care about `"Data"` and `"Valore"`, thus:
+```{r}
+df <- df[, c("Data", "Valore")]
+```
+
+Let's first focus on converting the dates into a proper format, instead of just strings.
+
+```{r}
+df$Data <- dmy_hms(df$Data)
+```
+It's easy to see that this data frame is not sorted date-wise, so we immediately fix that for time series plotting.
+
+```{r}
+is.unsorted(df$Data) # returns true
+df <- df[order(df$Data), ] # reorders the data
+```
+
+The station had some periods of time in which it was not collecting any data, so we don't have the correct number of measurements, let's fix that.
+
+```{r}
+expected_times <- seq(from = min(df$Data), to = max(df$Data), by = "10 min")
+missing_times <- setdiff(expected_times, df$Data)
+# Check if there are missing timestamps
+if (length(missing_times) > 0) {
+  cat("There are", length(missing_times), "missing timestamps.\n")
+} else {
+  cat("No missing timestamps!\n")
+}
+
+# This inserts the missing times in the right order
+df <- data.frame(Data = expected_times) %>% left_join(df, by = "Data")
+# We get rid of the first measurement (I don't remember why I did that).
+df <- df[df$Data >= "2014-07-19 00:00:00", ]
+```
+
+Now we can set up the time series
+
+```{r}
+xts_data <- xts(df$Valore, order.by = df$Data)
+# This gets rid of faulty measurements. This could've been done earlier to be fair
+xts_data[xts_data < 0] <- NA
+```
+
+For some reason (I don't remember) we take the sum of weekly measurements.
+
+```{r}
+weekly_meas <- apply.weekly(xts_data, sum)
+
+weekly_meas <- weekly_meas[weekly_meas > 1] # Why are we only considering weekly measurements > 1?
+summary(weekly_meas) # this reveals the quantiles
+plot(weekly_meas)
+```
+```{r}
+
+tau <- 1
+
+weekly_meas_shifted <- lag.xts(weekly_meas, k = -1)
+
+plot(as.numeric(weekly_meas), as.numeric(weekly_meas_shifted),
+     xlab = "Weekly measurement (Current Week)", ylab = "Weekly measurement (Next Week)",
+     main = "Weekly measurement vs Next Week's measurement", type = "l", col = "blue",
+     lty = 1, lwd = 2)
+
+```
