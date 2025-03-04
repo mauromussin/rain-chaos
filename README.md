@@ -16,5 +16,5 @@ In this example we provide to kinds of data:
 - sub daily raw data (see https://www.dati.lombardia.it/Ambiente/Precipitazioni-dal-2011-al-2020/2kar-pnuk/data_preview) 
 - daily data, as downloaded from SCIA (https://scia.isprambiente.it/servertsdailyutm/serietemporalidaily400.php)
 ## References
-@Hu https://www.mdpi.com/2073-4441/11/3/579
+@Hu https://www.mdpi.com/2073-4441/11/3/579  
 @Sivakumar https://doi.org/10.1016/S0022-1694(99)00186-9
