@@ -58,7 +58,7 @@ if (length(missing_times) > 0) {
 
 # This inserts the missing times in the right order
 df <- data.frame(Data = expected_times) %>% left_join(df, by = "Data")
-# We get rid of the first measurement (I don't remember why I did that).
+# We only take the time span in wich ata was collected properly.
 df <- df[df$Data >= "2014-07-19 00:00:00", ]
 ```
 
@@ -70,7 +70,7 @@ xts_data <- xts(df$Valore, order.by = df$Data)
 xts_data[xts_data < 0] <- NA
 ```
 
-For some reason (I don't remember) we take the sum of weekly measurements.
+In order to have a more stable variable we take the sum of weekly measurements (i.e. weekly cumulated precipitation)
 
 ```{r}
 weekly_meas <- apply.weekly(xts_data, sum)
